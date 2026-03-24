@@ -8,19 +8,15 @@ from llm_agent import ContextLLMAgent
 
 app = FastAPI(title="Context Graph System")
 
-# Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local dev
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize data if not already done
 database.init_db()
-
-# LLM Agent
 llm_agent = ContextLLMAgent("sqlite:///./context_graph.db")
 
 class ChatRequest(BaseModel):
@@ -33,7 +29,6 @@ class ChatResponse(BaseModel):
     sql: str
     target_id: Optional[str] = None
 
-# Dependency to get DB session
 def get_db():
     db = database.SessionLocal()
     try:

@@ -26,20 +26,22 @@ export const NodeModal = ({ selectedNode, setSelectedNode, neighborCount }: Node
             <X size={18} className="text-gray-400" />
           </button>
         </div>
-        <div className="px-7 py-8 max-h-[500px] overflow-y-auto scrollbar-hide space-y-5">
-          {Object.entries(selectedNode.properties || selectedNode).map(([k, v]) => {
-            if (['x', 'y', 'vx', 'vy', 'index', 'id', 'color', 'val', 'group', 'label', '__lineColor', '__highlight'].includes(k)) return null;
-            return (
-              <div key={k} className="flex flex-col group">
-                <span className="text-[11px] font-black text-gray-400 uppercase tracking-tighter opacity-70 group-hover:opacity-100 transition-opacity">
-                  {k.replace(/([A-Z])/g, ' $1').trim()}
-                </span>
-                <span className="text-[14px] text-slate-900 font-bold mt-1 bg-white/10 p-2 rounded-lg border border-white/10 group-hover:bg-white/20 transition-all font-mono tracking-tight">
-                  {String(v)}
-                </span>
-              </div>
-            );
-          })}
+        <div className="px-7 py-8 max-h-[500px] overflow-y-auto scrollbar-hide space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            {Object.entries(selectedNode.properties || selectedNode).map(([k, v]) => {
+              if (['x', 'y', 'vx', 'vy', 'index', 'id', 'color', 'val', 'group', 'label', '__lineColor', '__highlight'].includes(k)) return null;
+              return (
+                <div key={k} className="flex flex-col group border-b border-slate-900/5 pb-3 last:border-0">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest opacity-70 group-hover:opacity-100 transition-opacity">
+                    {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                  </span>
+                  <span className="text-[14px] text-slate-900 font-bold mt-1.5 break-all font-mono tracking-tight">
+                    {String(v)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
           <div className="pt-6 flex items-center justify-between border-t border-white/5">
              <div className="flex flex-col">
                 <span className="text-[10px] text-gray-400 font-bold uppercase italic">Meta Analysis</span>

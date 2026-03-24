@@ -1,4 +1,4 @@
-import { Menu, Search, Bell } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 export const Header = () => {
   return (
@@ -12,9 +12,6 @@ export const Header = () => {
         </div>
       </div>
       <div className="flex items-center gap-5 text-gray-400">
-         <Search size={18} className="hover:text-gray-600 cursor-pointer" />
-         <Bell size={18} className="hover:text-gray-600 cursor-pointer" />
-         <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-lg shadow-indigo-600/20 cursor-pointer">AK</div>
       </div>
     </header>
   );

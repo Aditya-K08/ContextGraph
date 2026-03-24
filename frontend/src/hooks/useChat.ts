@@ -20,13 +20,13 @@ export const useChat = () => {
       const res = await axios.post(`${API_BASE}/chat`, { query: userMsg });
       const data = res.data;
       setChatHistory(prev => [
-        ...prev, 
+        ...prev,
         { role: 'system', content: data.answer, sql: data.sql }
       ]);
       onSuccess(data);
     } catch (err) {
       setChatHistory(prev => [
-        ...prev, 
+        ...prev,
         { role: 'system', content: "Sorry, I couldn't reach the backend. Is it running?" }
       ]);
     } finally {

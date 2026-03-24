@@ -22,14 +22,14 @@ export const ChatSidebar = ({ chatHistory, loadingChat, query, setQuery, onSend 
 
       <div className="flex-1 overflow-y-auto p-7 pt-2 space-y-8 scrollbar-hide">
         <div className="flex gap-4 animate-in">
-           <div className="w-11 h-11 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-slate-900/10 flex-shrink-0">D</div>
-           <div className="flex-1 space-y-1.5">
-              <div className="flex items-center gap-2">
-                 <span className="text-[12px] font-black text-slate-900">Dodge AI</span>
-                 <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter">System</span>
-              </div>
-              <p className="text-[13px] text-slate-700 leading-relaxed font-medium">Greetings. I've finished mapping the <span className="font-bold text-slate-900 underline decoration-blue-500/30 decoration-2">Order to Cash</span> dataset. How can I assist your analysis today?</p>
-           </div>
+          <div className="w-11 h-11 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-slate-900/10 flex-shrink-0">D</div>
+          <div className="flex-1 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-black text-slate-900">Dodge AI</span>
+              <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter">System</span>
+            </div>
+            <p className="text-[13px] text-slate-700 leading-relaxed font-medium">Greetings. I've finished mapping the <span className="font-bold text-slate-900 underline decoration-blue-500/30 decoration-2">Order to Cash</span> dataset. How can I assist your analysis today?</p>
+          </div>
         </div>
 
         {chatHistory.map((msg, i) => (
@@ -44,13 +44,21 @@ export const ChatSidebar = ({ chatHistory, loadingChat, query, setQuery, onSend 
               )}
             </div>
             <div className="flex-1 space-y-1.5">
-               <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-black text-slate-900">{msg.role === 'user' ? 'YOU' : 'DODGE AI'}</span>
-                  {msg.role === 'system' && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter">LUNA-2</span>}
-               </div>
-               <div className={msg.role === 'user' ? 'chat-user-bubble' : 'text-[13px] text-slate-700 font-medium leading-relaxed'}>
-                 {msg.content}
-               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-black text-slate-900">{msg.role === 'user' ? 'YOU' : 'DODGE AI'}</span>
+                {msg.role === 'system' && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter">LUNA-2</span>}
+              </div>
+              <div className={msg.role === 'user' ? 'chat-user-bubble' : 'text-[13px] text-slate-700 font-medium leading-relaxed'}>
+                {msg.content}
+                {msg.role === 'system' && msg.sql && (
+                  <div className="mt-3 p-3 bg-blue-950 rounded-xl border border-blue-800/50 shadow-inner">
+                    <span className="text-[10px] text-blue-400 font-black uppercase tracking-widest block mb-1">Generated SQL</span>
+                    <code className="text-[11px] text-blue-100 font-mono break-all leading-tight">
+                      {msg.sql}
+                    </code>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -85,17 +93,14 @@ export const ChatSidebar = ({ chatHistory, loadingChat, query, setQuery, onSend 
             placeholder="Query your supply chain..."
             className="w-full bg-transparent border-none outline-none text-[13px] font-semibold py-3 pl-4 pr-12 resize-none scrollbar-hide max-h-[200px] text-slate-800 placeholder-slate-400"
           />
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={!query.trim() || loadingChat}
             className="absolute right-3 bottom-3 p-2.5 bg-blue-600 text-white rounded-xl hover:bg-black transition-all disabled:opacity-20 shadow-lg shadow-blue-500/20"
           >
             {loadingChat ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
         </form>
-        <div className="mt-4 text-center">
-           <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Enterprise Graph Insight • v2.0.4</span>
-        </div>
       </div>
     </div>
   );

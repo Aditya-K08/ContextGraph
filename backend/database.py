@@ -11,6 +11,7 @@ class Customer(Base):
     sap_id = Column(String, unique=True, index=True)
     name = Column(String, index=True)
     location = Column(String)
+    raw_data = Column(String)
     
 class Product(Base):
     __tablename__ = 'products'
@@ -19,6 +20,7 @@ class Product(Base):
     name = Column(String)
     category = Column(String)
     price = Column(Float)
+    raw_data = Column(String)
 
 class Address(Base):
     __tablename__ = 'addresses'
@@ -27,6 +29,7 @@ class Address(Base):
     street = Column(String)
     city = Column(String)
     postal_code = Column(String)
+    raw_data = Column(String)
 
 class Order(Base):
     __tablename__ = 'orders'
@@ -37,6 +40,7 @@ class Order(Base):
     order_date = Column(Date)
     total_amount = Column(Float)
     currency = Column(String)
+    raw_data = Column(String)
     
     customer = relationship("Customer")
     address = relationship("Address")
@@ -44,11 +48,12 @@ class Order(Base):
 class OrderItem(Base):
     __tablename__ = 'order_items'
     id = Column(Integer, primary_key=True, index=True)
-    sap_id = Column(String, unique=True, index=True) # salesOrder + salesOrderItem
+    sap_id = Column(String, unique=True, index=True)
     order_id = Column(Integer, ForeignKey('orders.id'))
     product_id = Column(Integer, ForeignKey('products.id'))
     quantity = Column(Float)
     unit_price = Column(Float)
+    raw_data = Column(String)
 
     order = relationship("Order", backref="items")
     product = relationship("Product")
@@ -61,6 +66,7 @@ class Delivery(Base):
     status = Column(String)
     delivery_date = Column(Date)
     shipping_point = Column(String)
+    raw_data = Column(String)
 
     order = relationship("Order", backref="deliveries")
 
@@ -75,6 +81,7 @@ class Invoice(Base):
     currency = Column(String)
     status = Column(String)
     issue_date = Column(Date)
+    raw_data = Column(String)
 
     order = relationship("Order", backref="invoices")
     delivery = relationship("Delivery", backref="invoices")
@@ -82,12 +89,13 @@ class Invoice(Base):
 class Payment(Base):
     __tablename__ = 'payments'
     id = Column(Integer, primary_key=True, index=True)
-    sap_id = Column(String, unique=True, index=True) # accountingDocument + accountingDocumentItem
+    sap_id = Column(String, unique=True, index=True) 
     invoice_id = Column(Integer, ForeignKey('invoices.id'))
     amount = Column(Float)
     currency = Column(String)
     payment_date = Column(Date)
     method = Column(String)
+    raw_data = Column(String)
     
     invoice = relationship("Invoice", backref="payments")
 
@@ -96,6 +104,7 @@ class Plant(Base):
     id = Column(Integer, primary_key=True, index=True)
     sap_id = Column(String, unique=True, index=True)
     name = Column(String)
+    raw_data = Column(String)
 
 class StorageLocation(Base):
     __tablename__ = 'storage_locations'
@@ -103,21 +112,24 @@ class StorageLocation(Base):
     sap_id = Column(String, unique=True, index=True)
     name = Column(String)
     plant_id = Column(Integer, ForeignKey('plants.id'))
+    raw_data = Column(String)
 
 class ScheduleLine(Base):
     __tablename__ = 'schedule_lines'
     id = Column(Integer, primary_key=True, index=True)
-    sap_id = Column(String, unique=True, index=True) # salesOrder + salesOrderItem + scheduleLine
+    sap_id = Column(String, unique=True, index=True) 
     order_item_id = Column(Integer, ForeignKey('order_items.id'))
     delivery_date = Column(Date)
     order_quantity = Column(Float)
     confirmed_quantity = Column(Float)
+    raw_data = Column(String)
 
 class CustomerCompany(Base):
     __tablename__ = 'customer_companies'
     id = Column(Integer, primary_key=True, index=True)
     customer_id = Column(Integer, ForeignKey('customers.id'))
     company_code = Column(String)
+    raw_data = Column(String)
 
 class CustomerSalesArea(Base):
     __tablename__ = 'customer_sales_areas'
@@ -126,20 +138,23 @@ class CustomerSalesArea(Base):
     sales_org = Column(String)
     dist_channel = Column(String)
     division = Column(String)
+    raw_data = Column(String)
 
 class ProductPlant(Base):
     __tablename__ = 'product_plants'
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey('products.id'))
     plant_id = Column(Integer, ForeignKey('plants.id'))
+    raw_data = Column(String)
 
 class JournalEntryItem(Base):
     __tablename__ = 'journal_entry_items'
     id = Column(Integer, primary_key=True, index=True)
-    sap_id = Column(String, unique=True, index=True) # accountingDocument + item
+    sap_id = Column(String, unique=True, index=True) 
     invoice_id = Column(Integer, ForeignKey('invoices.id'))
     amount = Column(Float)
     account = Column(String)
+    raw_data = Column(String)
 
 engine = create_engine('sqlite:///./context_graph.db')
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -149,12 +164,10 @@ def init_db():
     
 def seed_data():
     db = SessionLocal()
-    # Check if empty
     if db.query(Customer).first():
         db.close()
         return
 
-    # Create Customers
     customers = [
         Customer(name="Alice Corporation", location="New York"),
         Customer(name="Bob Industries", location="San Francisco"),
@@ -163,7 +176,6 @@ def seed_data():
     ]
     db.add_all(customers)
     
-    # Create Addresses
     addresses = [
         Address(street="123 Alpha St", city="New York", postal_code="10001"),
         Address(street="456 Beta Ave", city="San Francisco", postal_code="94105"),
@@ -172,7 +184,6 @@ def seed_data():
     ]
     db.add_all(addresses)
     
-    # Create Products
     products = [
         Product(name="Widget A", category="Hardware", price=10.50),
         Product(name="Widget B", category="Hardware", price=15.00),
@@ -183,16 +194,14 @@ def seed_data():
     
     db.commit()
 
-    # Create Orders with items, deliveries, invoices, and payments
     base_date = date(2025, 1, 1)
-    for i in range(1, 16):  # 15 orders
+    for i in range(1, 16):  
         c_idx = random.randint(0, 3)
         cust = customers[c_idx]
         addr = addresses[c_idx]
         
         o_date = base_date + timedelta(days=random.randint(0, 100))
         
-        # Determine items
         num_items = random.randint(1, 3)
         total_amount = 0
         items_objs = []
@@ -204,22 +213,19 @@ def seed_data():
             
         order = Order(customer_id=cust.id, address_id=addr.id, order_date=o_date, total_amount=total_amount)
         db.add(order)
-        db.commit() # commit to get order id
+        db.commit() 
         
         for item in items_objs:
             item.order_id = order.id
             db.add(item)
             
-        # Delivery flow
-        # ~80% delivered, ~20% pending
         has_delivery = random.random() > 0.2
         if has_delivery:
             del_date = o_date + timedelta(days=random.randint(1, 5))
             delivery = Delivery(order_id=order.id, status=random.choice(["Delivered", "In Transit"]), delivery_date=del_date)
             db.add(delivery)
             
-        # Invoice flow
-        # ~90% invoiced
+        
         has_invoice = random.random() > 0.1
         inv = None
         if has_invoice:
@@ -228,8 +234,7 @@ def seed_data():
             db.add(inv)
             db.commit()
             
-            # Payment flow
-            # ~70% paid if invoiced
+            
             if random.random() > 0.3:
                 pay_date = inv_date + timedelta(days=random.randint(1, 30))
                 payment = Payment(invoice_id=inv.id, amount=total_amount, payment_date=pay_date, method=random.choice(["Credit Card", "Bank Transfer", "Check"]))

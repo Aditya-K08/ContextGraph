@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ChatSidebar } from './components/ChatSidebar';
 import { GraphControls } from './components/GraphControls';
@@ -21,24 +21,9 @@ function App() {
     chatHistory, loadingChat, query, setQuery, handleQuery 
   } = useChat();
 
-  const [rotation, setRotation] = useState(0);
-  const [isRotating, setIsRotating] = useState(false);
-
   useEffect(() => {
     fetchGraph();
   }, []);
-
-  useEffect(() => {
-    let animationFrame: number;
-    const rotate = () => {
-      if (isRotating) {
-        setRotation(prev => (prev + 0.005) % (Math.PI * 2));
-      }
-      animationFrame = requestAnimationFrame(rotate);
-    };
-    rotate();
-    return () => cancelAnimationFrame(animationFrame);
-  }, [isRotating]);
 
   const handleNodeClick = useCallback((node: any) => {
     setSelectedNode(node);
@@ -74,7 +59,7 @@ function App() {
       <Header />
       <div className="flex flex-1 overflow-hidden relative">
         <div className="flex-1 relative bg-[#fcfcfc] overflow-hidden">
-          <GraphControls isRotating={isRotating} setIsRotating={setIsRotating} />
+          <GraphControls />
           
           <GraphEngine 
             fgRef={fgRef}
@@ -87,7 +72,6 @@ function App() {
             onNodeHover={handleNodeHover}
             onNodeClick={handleNodeClick}
             onBackgroundClick={() => setSelectedNode(null)}
-            rotation={rotation}
           />
 
           <NodeModal 

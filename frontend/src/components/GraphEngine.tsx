@@ -14,13 +14,12 @@ interface GraphEngineProps {
   onNodeHover: (node: any) => void;
   onNodeClick: (node: any) => void;
   onBackgroundClick: () => void;
-  rotation: number;
 }
 
 export const GraphEngine = ({ 
   fgRef, loadingGraph, graphData, dimensions, 
   highlightNodes, highlightLinks, selectedNode,
-  onNodeHover, onNodeClick, onBackgroundClick, rotation
+  onNodeHover, onNodeClick, onBackgroundClick
 }: GraphEngineProps) => {
 
   const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -102,17 +101,6 @@ export const GraphEngine = ({
         linkDirectionalParticles={(link: any) => highlightLinks.has(link) ? 6 : 0}
         linkDirectionalParticleSpeed={0.008}
         backgroundColor="#fcfcfc"
-        onRenderFramePre={(ctx) => {
-          ctx.save();
-          if (rotation !== 0) {
-            const centerX = dimensions.width / 2;
-            const centerY = dimensions.height / 2;
-            ctx.translate(centerX, centerY);
-            ctx.rotate(rotation);
-            ctx.translate(-centerX, -centerY);
-          }
-        }}
-        onRenderFramePost={(ctx) => ctx.restore()}
         cooldownTicks={120}
       />
     </div>

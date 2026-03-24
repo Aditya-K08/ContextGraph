@@ -56,23 +56,22 @@ Top K: {top_k}"""
 class ContextLLMAgent:
     def __init__(self, db_uri: str = "sqlite:///./context_graph.db"):
         self.db = SQLDatabase.from_uri(db_uri)
-        # Using a default or checking for key
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             print("WARNING: GOOGLE_API_KEY environment variable not set. LLM queries will fail.")
         
-        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash", 
+            google_api_key=api_key,
+            temperature=0
+        )
         self.execute_query = QuerySQLDatabaseTool(db=self.db)
-        
-        # 1. Chain to write query
+
         query_prompt = PromptTemplate.from_template(QUERY_PROMPT_TEMPLATE)
         self.write_query = create_sql_query_chain(self.llm, self.db, prompt=query_prompt)
         
-        # 2. Chain to formulate answer based on results and guardrails
         self.answer_prompt = PromptTemplate.from_template(GUARDRAIL_PROMPT)
 
-        
-        # Combine all to form complete execution chain
         self.chain = (
             RunnablePassthrough.assign(query=self.write_query).assign(
                 result=lambda x: self.execute_query.invoke(x["query"])
@@ -84,7 +83,6 @@ class ContextLLMAgent:
 
     def clean_sql(self, sql: str) -> str:
         """Strip markdown code blocks and whitespace."""
-        # Simple cleanup
         s = sql.strip()
         if s.startswith("```sql"):
             s = s[6:]
@@ -96,11 +94,9 @@ class ContextLLMAgent:
 
     def query(self, question: str) -> dict:
         try:
-            # First get the generated SQL
             generated_sql = self.write_query.invoke({"question": question})
             cleaned_sql = self.clean_sql(generated_sql)
             
-            # Simple pre-check heuristic
             lower_q = question.lower()
             if any(word in lower_q for word in ["poem", "recipe", "joke", "president", "weather", "capital of"]):
                 return {
@@ -116,10 +112,8 @@ class ContextLLMAgent:
                     "target_id": None
                 }
 
-            # Manually execute the flow to ensure we use cleaned_sql
             sql_result = self.execute_query.invoke(cleaned_sql)
             
-            # Final answer chain
             final_answer = (
                 self.answer_prompt 
                 | self.llm 
@@ -130,8 +124,6 @@ class ContextLLMAgent:
                 "result": sql_result
             })
 
-            # Attempt to extract an ID for the frontend to highlight
-            # We look for common SAP ID patterns in the result or answer
             import re
             ids = re.findall(r'\b\d{6,10}(?:_\d+)?\b', str(sql_result) + " " + final_answer)
             target_id = ids[0] if ids else None

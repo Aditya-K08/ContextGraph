@@ -15,7 +15,6 @@ def parse_date(date_str):
     if not date_str:
         return None
     try:
-        # SAP dates are often in ISO format or similar
         return datetime.fromisoformat(date_str.replace('Z', '+00:00')).date()
     except Exception:
         return None
@@ -50,19 +49,20 @@ def map_customer(data):
     return Customer(
         sap_id=data.get('businessPartner'),
         name=data.get('businessPartnerName'),
-        location="" # Will update from address
+        location="",
+        raw_data=json.dumps(data)
     )
 
 def map_product(data):
     return Product(
         sap_id=data.get('product'),
-        name=data.get('productType'), # Description will be updated separately
+        name=data.get('productType'), 
         category=data.get('productGroup'),
-        price=0.0
+        price=0.0,
+        raw_data=json.dumps(data)
     )
 
 def map_order(data):
-    # Find internal customer ID
     db = SessionLocal()
     customer = db.query(Customer).filter(Customer.sap_id == data.get('soldToParty')).first()
     db.close()
@@ -74,7 +74,8 @@ def map_order(data):
         customer_id=customer.id,
         order_date=parse_date(data.get('creationDate')),
         total_amount=float(data.get('totalNetAmount', 0)),
-        currency=data.get('transactionCurrency')
+        currency=data.get('transactionCurrency'),
+        raw_data=json.dumps(data)
     )
 
 def map_order_item(data):
@@ -92,19 +93,19 @@ def map_order_item(data):
         order_id=order.id,
         product_id=product.id,
         quantity=float(data.get('requestedQuantity', 0)),
-        unit_price=float(data.get('netAmount', 0)) / float(data.get('requestedQuantity')) if float(data.get('requestedQuantity', 0)) > 0 else 0
+        unit_price=float(data.get('netAmount', 0)) / float(data.get('requestedQuantity')) if float(data.get('requestedQuantity', 0)) > 0 else 0,
+        raw_data=json.dumps(data)
     )
 
 def map_delivery(data):
     db = SessionLocal()
-    # Deliveries are linked via items to orders, so we might need a multi-step update
-    # For now, we'll map header and update order_id when processing items
     db.close()
     return Delivery(
         sap_id=data.get('deliveryDocument'),
         status=data.get('overallGoodsMovementStatus'),
         delivery_date=parse_date(data.get('creationDate')),
-        shipping_point=data.get('shippingPoint')
+        shipping_point=data.get('shippingPoint'),
+        raw_data=json.dumps(data)
     )
 
 def map_invoice(data):
@@ -114,12 +115,12 @@ def map_invoice(data):
         amount=float(data.get('totalNetAmount', 0)),
         currency=data.get('transactionCurrency'),
         status="Cancelled" if data.get('billingDocumentIsCancelled') else "Issued",
-        issue_date=parse_date(data.get('billingDocumentDate'))
+        issue_date=parse_date(data.get('billingDocumentDate')),
+        raw_data=json.dumps(data)
     )
 
 def map_payment(data):
     db = SessionLocal()
-    # Search for invoice by accounting_doc
     invoice = db.query(Invoice).filter(Invoice.accounting_doc == data.get('accountingDocument')).first()
     db.close()
     
@@ -133,13 +134,15 @@ def map_payment(data):
         amount=float(data.get('amountInTransactionCurrency', 0)),
         currency=data.get('transactionCurrency'),
         payment_date=parse_date(data.get('clearingDate')),
-        method="Bank Transfer" # Default
+        method="Bank Transfer",
+        raw_data=json.dumps(data)
     )
 
 def map_plant(data):
     return Plant(
         sap_id=data.get('plant'),
-        name=data.get('plantName') or data.get('plant')
+        name=data.get('plantName') or data.get('plant'),
+        raw_data=json.dumps(data)
     )
 
 def map_storage_location(data):
@@ -149,7 +152,8 @@ def map_storage_location(data):
     return StorageLocation(
         sap_id=f"{data.get('plant')}_{data.get('storageLocation')}",
         name=data.get('storageLocationName') or data.get('storageLocation'),
-        plant_id=plant.id if plant else None
+        plant_id=plant.id if plant else None,
+        raw_data=json.dumps(data)
     )
 
 def map_schedule_line(data):
@@ -163,22 +167,25 @@ def map_schedule_line(data):
         order_item_id=item.id,
         delivery_date=parse_date(data.get('requestedDeliveryDate')),
         order_quantity=float(data.get('orderQuantity', 0)),
-        confirmed_quantity=float(data.get('confrimedQtyInOrderQtyUnit', 0))
+        confirmed_quantity=float(data.get('confrimedQtyInOrderQtyUnit', 0)),
+        raw_data=json.dumps(data)
     )
 
 from database import CustomerCompany, CustomerSalesArea
 
 def map_cust_company(data):
     db = SessionLocal()
-    # Key is 'customer' in this file
     cust = db.query(Customer).filter(Customer.sap_id == data.get('customer')).first()
     db.close()
     if not cust: return None
-    return CustomerCompany(customer_id=cust.id, company_code=data.get('companyCode'))
+    return CustomerCompany(
+        customer_id=cust.id, 
+        company_code=data.get('companyCode'),
+        raw_data=json.dumps(data)
+    )
 
 def map_cust_sales(data):
     db = SessionLocal()
-    # Key is 'customer' in this file
     cust = db.query(Customer).filter(Customer.sap_id == data.get('customer')).first()
     db.close()
     if not cust: return None
@@ -186,7 +193,8 @@ def map_cust_sales(data):
         customer_id=cust.id,
         sales_org=data.get('salesOrganization'),
         dist_channel=data.get('distributionChannel'),
-        division=data.get('division')
+        division=data.get('division'),
+        raw_data=json.dumps(data)
     )
 
 def map_product_plant(data):
@@ -195,11 +203,14 @@ def map_product_plant(data):
     plant = db.query(Plant).filter(Plant.sap_id == data.get('plant')).first()
     db.close()
     if not product or not plant: return None
-    return ProductPlant(product_id=product.id, plant_id=plant.id)
+    return ProductPlant(
+        product_id=product.id, 
+        plant_id=plant.id,
+        raw_data=json.dumps(data)
+    )
 
 def map_journal_item(data):
     db = SessionLocal()
-    # Link to invoice via accounting document
     invoice = db.query(Invoice).filter(Invoice.accounting_doc == data.get('accountingDocument')).first()
     db.close()
     if not invoice: return None
@@ -208,18 +219,18 @@ def map_journal_item(data):
         sap_id=sap_id,
         invoice_id=invoice.id,
         amount=float(data.get('amountInTransactionCurrency', 0)),
-        account=data.get('glAccount')
+        account=data.get('glAccount'),
+        raw_data=json.dumps(data)
     )
 
 def map_billing_cancellation(data):
-    # This actually updates existing invoices
     db = SessionLocal()
     invoice = db.query(Invoice).filter(Invoice.sap_id == data.get('billingDocument')).first()
     if invoice:
         invoice.status = "Cancelled"
         db.commit()
     db.close()
-    return None # We don't create a new record, just update
+    return None
 
 def main():
     clear_db()
@@ -255,11 +266,9 @@ def main():
                 total_ingested += ingest_jsonl(os.path.join(folder_path, file), cls, mapper)
         print(f"Done. Ingested {total_ingested} {cls.__name__ if cls else folder} records.")
 
-    # Post-processing to link Deliveries and Invoices to Orders
     print("Post-processing links...")
     db = SessionLocal()
     
-    # Link Deliveries to Orders via outbound_delivery_items
     delivery_items_folder = os.path.join(DATA_DIR, "outbound_delivery_items")
     for file in os.listdir(delivery_items_folder):
         if file.endswith(".jsonl"):
@@ -272,7 +281,6 @@ def main():
                         delivery.order_id = order.id
             db.commit()
 
-    # Link Invoices to Deliveries (and Orders) via billing_document_items
     billing_items_folder = os.path.join(DATA_DIR, "billing_document_items")
     for file in os.listdir(billing_items_folder):
         if file.endswith(".jsonl"):
@@ -280,14 +288,13 @@ def main():
                 for line in f:
                     data = json.loads(line)
                     invoice = db.query(Invoice).filter(Invoice.sap_id == data.get('billingDocument')).first()
-                    # billing link to delivery usually
+    
                     delivery = db.query(Delivery).filter(Delivery.sap_id == data.get('referenceSdDocument')).first()
                     if invoice and delivery:
                         invoice.delivery_id = delivery.id
                         invoice.order_id = delivery.order_id
             db.commit()
             
-    # Update Product names from product_descriptions
     prod_desc_folder = os.path.join(DATA_DIR, "product_descriptions")
     for file in os.listdir(prod_desc_folder):
         if file.endswith(".jsonl"):
@@ -299,7 +306,6 @@ def main():
                         product.name = data.get('productDescription')
             db.commit()
 
-    # Update Customer locations from business_partner_addresses
     addr_folder = os.path.join(DATA_DIR, "business_partner_addresses")
     for file in os.listdir(addr_folder):
         if file.endswith(".jsonl"):
