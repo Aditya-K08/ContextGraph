@@ -24,7 +24,7 @@ An interactive 2D force-directed graph visualization of SAP Order-to-Cash (O2C) 
 *   Python 3.10+
 *   FastAPI + Uvicorn
 *   SQLAlchemy + SQLite
-*   LangChain + `langchain-google-genai` (Gemini 1.5 Flash)
+*   LangChain + `langchain-google-genai` (Gemini 2.5 Flash)
 
 ## 📦 Installation & Setup
 
