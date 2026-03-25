@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import type { GraphData } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://contextgraph-2.onrender.com/api';
+const API_BASE = 'https://contextgraph-2.onrender.com/api';
 
 export const useGraphData = () => {
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });

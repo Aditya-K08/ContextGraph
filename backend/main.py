@@ -11,7 +11,9 @@ app = FastAPI(title="Context Graph System")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "https://context-graph-two.vercel.app",
+        "https://context-graph-8qz8.vercel.app"
     ],
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
