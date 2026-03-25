@@ -12,7 +12,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://context-graph-iyd5.vercel.app"
+        "https://context-graph-iyd5.vercel.app",
+        "https://context-graph-two.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
